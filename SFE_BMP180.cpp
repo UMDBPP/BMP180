@@ -1,22 +1,9 @@
 /*
  SFE_BMP180.cpp
- Bosch BMP180 pressure sensor library for the Arduino microcontroller
- Mike Grusin, SparkFun Electronics
+ This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
+ Written for the University of Maryland Balloon Payload Project
  
- Forked from BMP085 library by M.Grusin
- Further forked from SFE_BMP180 library by Sparkfun
- Further further forked from SFE_BMP180 library by LowPowerLabs
- This current forkstrosity is for the University of Maryland Balloon Payload Project
-
- Uses floating-point equations from the Weather Station Data Logger project
- http://wmrx00.sourceforge.net/
- http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
-
- version 1.0 2013/09/20 initial version
-
- Our example code uses the "beerware" license. You can do anything
- you like with this code. No really, anything. If you find it useful,
- buy me a (root) beer someday.
+ Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
  */
 
 #include <SFE_BMP180.h>
@@ -56,6 +43,8 @@ SFE_BMP180::SFE_BMP180()
         Serial.println();
     }
 }
+
+// public
 
 // Returns current pressure reading in millibars
 double SFE_BMP180::getPressure()
@@ -137,9 +126,17 @@ double SFE_BMP180::getPressure()
 // Returns current altitude difference from baseline reading using current pressure
 double SFE_BMP180::getAltitude()
 {
-    
-    return altitude(pressure, baselinePressure);
+    pressure = getPressure();
+    return getAltitude(pressure, baselinePressure);
 }
+
+double SFE_BMP180::getTemperature()
+{
+    getTemperature (temperature);
+    return temperature();
+}
+
+// private
 
 char SFE_BMP180::begin()
 // Initialize library for subsequent pressure measurements
@@ -464,7 +461,7 @@ double SFE_BMP180::sealevel(double P, double A)
     return (P / pow(1 - (A / 44330.0), 5.255));
 }
 
-double SFE_BMP180::altitude(double P, double P0)
+double SFE_BMP180::getAltitude(double P, double P0)
 // Given a pressure measurement P (mb) and the pressure at a baseline P0 (mb),
 // return altitude (meters) above baseline.
 {

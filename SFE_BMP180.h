@@ -1,5 +1,5 @@
 /*
- SFE_BMP180.cpp
+ SFE_BMP180.h
  This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
  Written for the University of Maryland Balloon Payload Project
  
@@ -19,28 +19,12 @@ class SFE_BMP180
 {
     public:
         SFE_BMP180();    // base type
-        
         double getPressure();
-
         double getAltitude();
+        double getTemperature();
+    private:
+        double temperature, altitude, pressure, baselinePressure;
 
-        char getTemperature(double &T);
-        // return temperature measurement from previous startTemperature command
-        // places returned value in T variable (deg C)
-        // returns 1 for success, 0 for fail
-        
-        char getPressure(double &P, double &T);
-        // return absolute pressure measurement from previous startPressure command
-        // note: requires previous temperature measurement in variable T
-        // places returned value in P variable (mbar)
-        // returns 1 for success, 0 for fail
-        
-        double altitude(double P, double P0);
-        // convert absolute pressure to altitude (given baseline pressure; sea-level, runway, etc.)
-        // P: absolute pressure (mbar)
-        // P0: fixed baseline pressure (mbar)
-        // returns signed altitude in meters
-        
         char begin();
         // call pressure.begin() to initialize BMP180 before use
         // returns 1 if success, 0 if failure (bad component or I2C bus shorted?)
@@ -53,6 +37,23 @@ class SFE_BMP180
         // command BMP180 to start a pressure measurement
         // oversampling: 0 - 3 for oversampling value
         // returns (number of ms to wait) for success, 0 for fail
+        
+        char getTemperature(double &T);
+        // return temperature measurement from previous startTemperature command
+        // places returned value in T variable (deg C)
+        // returns 1 for success, 0 for fail
+        
+        char getPressure(double &P, double &T);
+        // return absolute pressure measurement from previous startPressure command
+        // note: requires previous temperature measurement in variable T
+        // places returned value in P variable (mbar)
+        // returns 1 for success, 0 for fail
+        
+        double getAltitude(double P, double P0);
+        // convert absolute pressure to altitude (given baseline pressure; sea-level, runway, etc.)
+        // P: absolute pressure (mbar)
+        // P0: fixed baseline pressure (mbar)
+        // returns signed altitude in meters
         
         double sealevel(double P, double A);
         // convert absolute pressure to sea-level pressure (as used in weather data)
@@ -69,9 +70,6 @@ class SFE_BMP180
         // 3 = Received NACK on transmit of data
         // 4 = Other error
         
-    private:
-        double temperature, altitude, pressure, baselinePressure;
-
         char readInt(char address, int &value);
         // read an signed int (16 bits) from a BMP180 register
         // address: BMP180 register address
