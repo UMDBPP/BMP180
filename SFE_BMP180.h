@@ -20,9 +20,9 @@ class SFE_BMP180
     public:
         SFE_BMP180();    // base type
         
-        double SFE_BMP180::getPressure();
+        double getPressure();
 
-        double SFE_BMP180::getAltitude();
+        double getAltitude();
 
         char getTemperature(double &T);
         // return temperature measurement from previous startTemperature command

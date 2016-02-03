@@ -54,8 +54,6 @@ SFE_BMP180::SFE_BMP180()
         Serial.print(baselinePressure);
         Serial.print(" mb.");
         Serial.println();
-        
-        Serial.println("System ready. Output will resume at launch.");
     }
 }
 
@@ -104,7 +102,7 @@ double SFE_BMP180::getPressure()
                  * (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
                  * Function returns 1 if successful, 0 if failure.
                  */
-                status = getPressure(&pressure, &temperature);
+                status = getPressure(pressure, temperature);
                 
                 if (status != 0)
                 {
@@ -139,7 +137,8 @@ double SFE_BMP180::getPressure()
 // Returns current altitude difference from baseline reading using current pressure
 double SFE_BMP180::getAltitude()
 {
-    return altitude(getPressure(), baselinePressure);
+    
+    return altitude(pressure, baselinePressure);
 }
 
 char SFE_BMP180::begin()
