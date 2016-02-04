@@ -1,13 +1,13 @@
 /*
- SFE_BMP180.h
+ BMP180.h
  This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
  Written for the University of Maryland Balloon Payload Project
  
  Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
  */
 
-#ifndef SFE_BMP180_h
-#define SFE_BMP180_h
+#ifndef BMP180_h
+#define BMP180_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"

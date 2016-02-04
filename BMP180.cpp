@@ -1,12 +1,12 @@
 /*
- SFE_BMP180.cpp
+ BMP180.cpp
  This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
  Written for the University of Maryland Balloon Payload Project
  
  Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
  */
 
-#include <SFE_BMP180.h>
+#include <BMP180.h>
 #include <Wire.h>
 #include <stdio.h>
 #include <math.h>
