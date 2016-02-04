@@ -15,10 +15,10 @@
 #include "WProgram.h"
 #endif
 
-class SFE_BMP180
+class BMP180
 {
     public:
-        SFE_BMP180();    // base type
+        BMP180();    // base type
         double getPressure();
         double getAltitude();
         double getTemperature();
