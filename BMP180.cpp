@@ -11,8 +11,10 @@
 #include <stdio.h>
 #include <math.h>
 
+// ########################### public methods ###########################
+
 BMP180::BMP180()
-// Base library type
+// initialize device registers and prepare pressure and temperature readings
 {
     if (begin())
     {
@@ -44,10 +46,8 @@ BMP180::BMP180()
     }
 }
 
-// public
-
-// Returns current pressure reading in millibars
 double BMP180::getPressure()
+// Returns current pressure reading in millibars using current temperature
 {
     char status;
     
@@ -123,23 +123,25 @@ double BMP180::getPressure()
     }
 }
 
-// Returns current altitude difference from baseline reading using current pressure
 double BMP180::getAltitude()
+// Returns current altitude difference from baseline reading using current pressure
 {
     pressure = getPressure();
     return getAltitude(pressure, baselinePressure);
 }
 
 double BMP180::getTemperature()
+// returns current temperature as read by device
 {
     getTemperature (temperature);
     return temperature();
 }
 
-// private
+// ########################### private methods ###########################
 
 char BMP180::begin()
-// Initialize library for subsequent pressure measurements
+// call pressure.begin() to initialize BMP180 before use
+// returns 1 if success, 0 if failure (bad component or I2C bus shorted?)
 {
     double c3, c4, b1;
     
@@ -235,87 +237,10 @@ char BMP180::begin()
     }
 }
 
-char BMP180::readInt(char address, int &value)
-// Read a signed integer (two bytes) from device
-// address: register to start reading (plus subsequent register)
-// value: external variable to store data (function modifies value)
-{
-    unsigned char data[2];
-    
-    data[0] = address;
-    if (readBytes(data, 2))
-    {
-        value = (((int) data[0] << 8) | (int) data[1]);
-        //if (*value & 0x8000) *value |= 0xFFFF0000; // sign extend if negative
-        return (1);
-    }
-    value = 0;
-    return (0);
-}
-
-char BMP180::readUInt(char address, unsigned int &value)
-// Read an unsigned integer (two bytes) from device
-// address: register to start reading (plus subsequent register)
-// value: external variable to store data (function modifies value)
-{
-    unsigned char data[2];
-    
-    data[0] = address;
-    if (readBytes(data, 2))
-    {
-        value = (((unsigned int) data[0] << 8) | (unsigned int) data[1]);
-        return (1);
-    }
-    value = 0;
-    return (0);
-}
-
-char BMP180::readBytes(unsigned char *values, char length)
-// Read an array of bytes from device
-// values: external array to hold data. Put starting register in values[0].
-// length: number of bytes to read
-{
-    char x;
-    
-    Wire.beginTransmission(BMP180_ADDR);
-    Wire.write(values[0]);
-    _error = Wire.endTransmission();
-    if (_error == 0)
-    {
-        Wire.requestFrom(BMP180_ADDR, length);
-        while (Wire.available() != length)
-            ;    // wait until bytes are ready
-        for (x = 0; x < length; x++)
-        {
-            values[x] = Wire.read();
-        }
-        return (1);
-    }
-    return (0);
-}
-
-char BMP180::writeBytes(unsigned char *values, char length)
-// Write an array of bytes to device
-// values: external array of data to write. Put starting register in values[0].
-// length: number of bytes to write
-{
-    char x;
-    
-    Wire.beginTransmission(BMP180_ADDR);
-    Wire.write(values, length);
-    _error = Wire.endTransmission();
-    if (_error == 0)
-        return (1);
-    else
-        return (0);
-}
-
-/*
- * Start a temperature measurement:
- * If request is successful, the number of ms to wait is returned.
- * If request is unsuccessful (I2C error), 0 is returned.
- */
 char BMP180::startTemperature(void)
+// Start a temperature measurement:
+// If request is successful, the number of ms to wait is returned.
+// If request is unsuccessful (I2C error), 0 is returned.
 {
     unsigned char data[2], result;
     
@@ -326,43 +251,6 @@ char BMP180::startTemperature(void)
         return (5);    // return the delay in ms (rounded up) to wait before retrieving data
     else
         return (0);    // or return 0 if there was a problem communicating with the BMP
-}
-
-char BMP180::getTemperature(double &T)
-// Retrieve a previously-started temperature reading.
-// Requires begin() to be called once prior to retrieve calibration parameters.
-// Requires startTemperature() to have been called prior and sufficient time elapsed.
-// T: external variable to hold result.
-// Returns 1 if successful, 0 if I2C error.
-{
-    unsigned char data[2];
-    char result;
-    double tu, a;
-    
-    data[0] = BMP180_REG_RESULT;
-    
-    result = readBytes(data, 2);
-    if (result)    // good read, calculate temperature
-    {
-        tu = (data[0] * 256.0) + data[1];
-        
-        //example from Bosch datasheet
-        //tu = 27898;
-        
-        //example from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
-        //tu = 0x69EC;
-        
-        a = c5 * (tu - c6);
-        T = a + (mc / (a + md));
-        
-        /*		
-         Serial.println();
-         Serial.print("tu: "); Serial.println(tu);
-         Serial.print("a: "); Serial.println(a);
-         Serial.print("T: "); Serial.println(*T);
-         */
-    }
-    return (result);
 }
 
 char BMP180::startPressure(char oversampling)
@@ -402,6 +290,43 @@ char BMP180::startPressure(char oversampling)
         return (delay);    // return the delay in ms (rounded up) to wait before retrieving data
     else
         return (0);    // or return 0 if there was a problem communicating with the BMP
+}
+
+char BMP180::getTemperature(double &T)
+// Retrieve a previously-started temperature reading.
+// Requires begin() to be called once prior to retrieve calibration parameters.
+// Requires startTemperature() to have been called prior and sufficient time elapsed.
+// T: external variable to hold result.
+// Returns 1 if successful, 0 if I2C error.
+{
+    unsigned char data[2];
+    char result;
+    double tu, a;
+    
+    data[0] = BMP180_REG_RESULT;
+    
+    result = readBytes(data, 2);
+    if (result)    // good read, calculate temperature
+    {
+        tu = (data[0] * 256.0) + data[1];
+        
+        //example from Bosch datasheet
+        //tu = 27898;
+        
+        //example from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
+        //tu = 0x69EC;
+        
+        a = c5 * (tu - c6);
+        T = a + (mc / (a + md));
+        
+        /*		
+         Serial.println();
+         Serial.print("tu: "); Serial.println(tu);
+         Serial.print("a: "); Serial.println(a);
+         Serial.print("T: "); Serial.println(*T);
+         */
+    }
+    return (result);
 }
 
 char BMP180::getPressure(double &P, double &T)
@@ -453,19 +378,19 @@ char BMP180::getPressure(double &P, double &T)
     return (result);
 }
 
+double BMP180::getAltitude(double P, double P0)
+// Given a pressure measurement P (mb) and the pressure at a baseline P0 (mb),
+// return signed altitude in meters above baseline.
+{
+    return (44330.0 * (1 - pow(P / P0, 1 / 5.255)));
+}
+
 double BMP180::sealevel(double P, double A)
-// Given a pressure P (mb) taken at a specific altitude (meters),
+// Given a pressure P (mb) taken at a specific altitude A (meters),
 // return the equivalent pressure (mb) at sea level.
 // This produces pressure readings that can be used for weather measurements.
 {
     return (P / pow(1 - (A / 44330.0), 5.255));
-}
-
-double BMP180::getAltitude(double P, double P0)
-// Given a pressure measurement P (mb) and the pressure at a baseline P0 (mb),
-// return altitude (meters) above baseline.
-{
-    return (44330.0 * (1 - pow(P / P0, 1 / 5.255)));
 }
 
 char BMP180::getError(void)
@@ -480,3 +405,81 @@ char BMP180::getError(void)
     return (_error);
 }
 
+char BMP180::readInt(char address, int &value)
+// Read a signed integer (two bytes) from device
+// address: register to start reading (plus subsequent register)
+// value: external variable to store data (function modifies value)
+// returns 1 for success, 0 for fail, with result in value
+{
+    unsigned char data[2];
+    
+    data[0] = address;
+    if (readBytes(data, 2))
+    {
+        value = (((int) data[0] << 8) | (int) data[1]);
+        //if (*value & 0x8000) *value |= 0xFFFF0000; // sign extend if negative
+        return (1);
+    }
+    value = 0;
+    return (0);
+}
+
+char BMP180::readUInt(char address, unsigned int &value)
+// Read an unsigned integer (two bytes) from device
+// address: register to start reading (plus subsequent register)
+// value: external variable to store data (function modifies value)
+// returns 1 for success, 0 for fail, with result in value
+{
+    unsigned char data[2];
+    
+    data[0] = address;
+    if (readBytes(data, 2))
+    {
+        value = (((unsigned int) data[0] << 8) | (unsigned int) data[1]);
+        return (1);
+    }
+    value = 0;
+    return (0);
+}
+
+char BMP180::readBytes(unsigned char *values, char length)
+// Read an array of bytes from device
+// values: external array to hold data. Put starting register in values[0].
+// length: number of bytes to read
+// returns 1 for success, 0 for fail, with read bytes in values[] array
+{
+    char x;
+    
+    Wire.beginTransmission(BMP180_ADDR);
+    Wire.write(values[0]);
+    _error = Wire.endTransmission();
+    if (_error == 0)
+    {
+        Wire.requestFrom(BMP180_ADDR, length);
+        while (Wire.available() != length)
+            ;    // wait until bytes are ready
+        for (x = 0; x < length; x++)
+        {
+            values[x] = Wire.read();
+        }
+        return (1);
+    }
+    return (0);
+}
+
+char BMP180::writeBytes(unsigned char *values, char length)
+// Write an array of bytes to device register (and consecutive subsequent registers)
+// values: array of char with register address in first location values[0]
+// length: number of bytes to write
+// returns 1 for success, 0 for fail
+{
+    char x;
+    
+    Wire.beginTransmission(BMP180_ADDR);
+    Wire.write(values, length);
+    _error = Wire.endTransmission();
+    if (_error == 0)
+        return (1);
+    else
+        return (0);
+}
