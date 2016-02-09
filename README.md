@@ -1,7 +1,9 @@
-BMP180 for UMD BPP
-======
-Forked from LowPowerLab.
-Simplified Arduino library for BMP180 Bosch barometric pressure/temperature sensors. 
-Use the Arduino IDE to upload (https://www.arduino.cc/en/Main/Software)
+#BMP180
+##Arduino Pressure Sensor Library
+###Developed for the Space Systems Laboratory at the University of Maryland
 
-Made for the Balloon Payload Project at the University of Maryland Space Systems Laboratory
+This is a heavily simplified Arduino library for BMP180 Bosch barometric pressure/temperature sensors, forked from LowPowerLab and Sparkfun. 
+If you need more functionality than just "getPressure" and "getTemperature" then try cloning those other BMP180 repositories instead (https://github.com/LowPowerLab/SFE_BMP180.git)
+
+##Installation
+Copy this folder into your_arduino_workspace/libraries/ and use the Arduino IDE (https://www.arduino.cc/en/Main/Software) to include and upload
