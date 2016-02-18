@@ -2,26 +2,22 @@
  BMP180.h
  This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
  Written for the University of Maryland Balloon Payload Project
- 
+
  Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
  */
 
 #ifndef BMP180_h
 #define BMP180_h
 
-#if defined(ARDUINO) && ARDUINO >= 100
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
+#include <Arduino.h>
 
 class BMP180
 {
     public:
         BMP180();
+        double getTemperature();
         double getPressure();
         double getAltitude();
-        double getTemperature();
     private:
         char begin();
         char startTemperature(void);
@@ -37,6 +33,7 @@ class BMP180
         char writeBytes(unsigned char *values, char length);
 
         double temperature, altitude, pressure, baselinePressure;
+        bool initialized;
         int AC1, AC2, AC3, VB1, VB2, MB, MC, MD;
         unsigned int AC4, AC5, AC6;
         double c5, c6, mc, md, x0, x1, x2, y0, y1, y2, p0, p1, p2;

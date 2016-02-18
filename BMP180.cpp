@@ -2,7 +2,7 @@
  BMP180.cpp
  This is a simplified version of LowPowerLab's SFE_BMP180 pressure sensor library, meant for non programmers looking to make pressure sensors
  Written for the University of Maryland Balloon Payload Project
- 
+
  Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
  */
 
@@ -16,50 +16,51 @@
 BMP180::BMP180()
 // initialize device registers and prepare pressure and temperature readings
 {
-    if (begin())
+    Serial.println("Initializing BMP180...");
+
+    if (!begin())
     {
-        if (begin())
-        {
-            Serial.println("Pressure sensor successfully initialized.");
-            Serial.println("Now attempting baseline pressure reading...");
-        }
-        else
-        {
-            Serial.println("Pressure sensor failed (is it disconnected?)");
-            Serial.println("System going to sleep.");
-            while (1)
-            {
-                // infinite loop to pause forever
-            }
-        }
-        
-        delay(1000);
-        
+        Serial.println("BMP180 failed to initialize (is it disconnected?)");
+    }
+    else
+    {
+        Serial.println("BMP180 initialized successfully.");
+        Serial.println("Now attempting baseline pressure reading...");
+
         // Get baseline pressure
         baselinePressure = getPressure();
-        
-        // Print baseline pressure
+
+        // Print baseline pressure and temperature
         Serial.print("Baseline pressure is ");
         Serial.print(baselinePressure);
-        Serial.print(" mb.");
-        Serial.println();
+        Serial.println(" mb.");
+        Serial.print("Temperature is ");
+        Serial.print(temperature);
+        Serial.println(" C.");
     }
+}
+
+double BMP180::getTemperature()
+// returns current temperature as read by device
+{
+    getTemperature (temperature);
+    return temperature;
 }
 
 double BMP180::getPressure()
 // Returns current pressure reading in millibars using current temperature
 {
     char status;
-    
+
     // You must first get a temperature measurement to perform a pressure reading.
-    
+
     status = startTemperature();
-    
+
     if (status != 0)
     {
         // Wait for the measurement to complete:
         delay(status);
-        
+
         /*
          * Retrieve the completed temperature measurement:
          * Note that the measurement is stored in the variable 'temperature'.
@@ -67,7 +68,7 @@ double BMP180::getPressure()
          * Function returns 1 if successful, 0 if failure.
          */
         status = getTemperature(temperature);
-        
+
         if (status != 0)
         {
             /*
@@ -77,12 +78,12 @@ double BMP180::getPressure()
              * If request is unsuccessful, 0 is returned.
              */
             status = startPressure(3);
-            
+
             if (status != 0)
             {
                 // Wait for the measurement to complete:
                 delay(status);
-                
+
                 /*
                  * Retrieve the completed pressure measurement:
                  * Note that the measurement is stored in the variable 'pressure'.
@@ -92,7 +93,7 @@ double BMP180::getPressure()
                  * Function returns 1 if successful, 0 if failure.
                  */
                 status = getPressure(pressure, temperature);
-                
+
                 if (status != 0)
                 {
                     return (pressure);
@@ -130,13 +131,6 @@ double BMP180::getAltitude()
     return getAltitude(pressure, baselinePressure);
 }
 
-double BMP180::getTemperature()
-// returns current temperature as read by device
-{
-    getTemperature (temperature);
-    return temperature();
-}
-
 // ########################### private methods ###########################
 
 char BMP180::begin()
@@ -144,37 +138,37 @@ char BMP180::begin()
 // returns 1 if success, 0 if failure (bad component or I2C bus shorted?)
 {
     double c3, c4, b1;
-    
+
     // Start up the Arduino's "wire" (I2C) library:
-    
+
     Wire.begin();
-    
+
     // The BMP180 includes factory calibration data stored on the device.
     // Each device has different numbers, these must be retrieved and
     // used in the calculations when taking pressure measurements.
-    
+
     // Retrieve calibration data from device:
-    
+
     if (readInt(0xAA, AC1) && readInt(0xAC, AC2) && readInt(0xAE, AC3)
             && readUInt(0xB0, AC4) && readUInt(0xB2, AC5) && readUInt(0xB4, AC6)
             && readInt(0xB6, VB1) && readInt(0xB8, VB2) && readInt(0xBA, MB)
             && readInt(0xBC, MC) && readInt(0xBE, MD))
     {
-        
+
         // All reads completed successfully!
-        
+
         // If you need to check your math using known numbers,
         // you can uncomment one of these examples.
         // (The correct results are commented in the below functions.)
-        
+
         // Example from Bosch datasheet
         // AC1 = 408; AC2 = -72; AC3 = -14383; AC4 = 32741; AC5 = 32757; AC6 = 23153;
         // B1 = 6190; B2 = 4; MB = -32768; MC = -8711; MD = 2868;
-        
+
         // Example from http://wmrx00.sourceforge.net/Arduino/BMP180-Calcs.pdf
         // AC1 = 7911; AC2 = -934; AC3 = -14306; AC4 = 31567; AC5 = 25671; AC6 = 18974;
         // VB1 = 5498; VB2 = 46; MB = -32768; MC = -11075; MD = 2432;
-        
+
         /*
          Serial.print("AC1: "); Serial.println(AC1);
          Serial.print("AC2: "); Serial.println(AC2);
@@ -206,7 +200,7 @@ char BMP180::begin()
         p0 = (3791.0 - 8.0) / 1600.0;
         p1 = 1.0 - 7357.0 * pow(2, -20);
         p2 = 3038.0 * 100.0 * pow(2, -36);
-        
+
         /*
          Serial.println();
          Serial.print("c3: "); Serial.println(c3);
@@ -243,7 +237,7 @@ char BMP180::startTemperature(void)
 // If request is unsuccessful (I2C error), 0 is returned.
 {
     unsigned char data[2], result;
-    
+
     data[0] = BMP180_REG_CONTROL;
     data[1] = BMP180_COMMAND_TEMPERATURE;
     result = writeBytes(data, 2);
@@ -259,9 +253,9 @@ char BMP180::startPressure(char oversampling)
 // Will return delay in ms to wait, or 0 if I2C error.
 {
     unsigned char data[2], result, delay;
-    
+
     data[0] = BMP180_REG_CONTROL;
-    
+
     switch (oversampling)
     {
         case 0:
@@ -302,24 +296,24 @@ char BMP180::getTemperature(double &T)
     unsigned char data[2];
     char result;
     double tu, a;
-    
+
     data[0] = BMP180_REG_RESULT;
-    
+
     result = readBytes(data, 2);
     if (result)    // good read, calculate temperature
     {
         tu = (data[0] * 256.0) + data[1];
-        
+
         //example from Bosch datasheet
         //tu = 27898;
-        
+
         //example from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
         //tu = 0x69EC;
-        
+
         a = c5 * (tu - c6);
         T = a + (mc / (a + md));
-        
-        /*		
+
+        /*
          Serial.println();
          Serial.print("tu: "); Serial.println(tu);
          Serial.print("a: "); Serial.println(a);
@@ -344,26 +338,26 @@ char BMP180::getPressure(double &P, double &T)
     unsigned char data[3];
     char result;
     double pu, s, x, y, z;
-    
+
     data[0] = BMP180_REG_RESULT;
-    
+
     result = readBytes(data, 3);
     if (result)    // good read, calculate pressure
     {
         pu = (data[0] * 256.0) + data[1] + (data[2] / 256.0);
-        
+
         //example from Bosch datasheet
         //pu = 23843;
-        
-        //example from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf, pu = 0x982FC0;	
+
+        //example from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf, pu = 0x982FC0;
         //pu = (0x98 * 256.0) + 0x2F + (0xC0/256.0);
-        
+
         s = T - 25.0;
         x = (x2 * pow(s, 2)) + (x1 * s) + x0;
         y = (y2 * pow(s, 2)) + (y1 * s) + y0;
         z = (pu - x) / y;
         P = (p2 * pow(z, 2)) + (p1 * z) + p0;
-        
+
         /*
          Serial.println();
          Serial.print("pu: "); Serial.println(pu);
@@ -395,7 +389,7 @@ double BMP180::sealevel(double P, double A)
 
 char BMP180::getError(void)
 // If any library command fails, you can retrieve an extended
-// error code using this command. Errors are from the wire library: 
+// error code using this command. Errors are from the wire library:
 // 0 = Success
 // 1 = Data too long to fit in transmit buffer
 // 2 = Received NACK on transmit of address
@@ -412,7 +406,7 @@ char BMP180::readInt(char address, int &value)
 // returns 1 for success, 0 for fail, with result in value
 {
     unsigned char data[2];
-    
+
     data[0] = address;
     if (readBytes(data, 2))
     {
@@ -431,7 +425,7 @@ char BMP180::readUInt(char address, unsigned int &value)
 // returns 1 for success, 0 for fail, with result in value
 {
     unsigned char data[2];
-    
+
     data[0] = address;
     if (readBytes(data, 2))
     {
@@ -449,7 +443,7 @@ char BMP180::readBytes(unsigned char *values, char length)
 // returns 1 for success, 0 for fail, with read bytes in values[] array
 {
     char x;
-    
+
     Wire.beginTransmission(BMP180_ADDR);
     Wire.write(values[0]);
     _error = Wire.endTransmission();
@@ -474,7 +468,7 @@ char BMP180::writeBytes(unsigned char *values, char length)
 // returns 1 for success, 0 for fail
 {
     char x;
-    
+
     Wire.beginTransmission(BMP180_ADDR);
     Wire.write(values, length);
     _error = Wire.endTransmission();
