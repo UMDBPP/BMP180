@@ -4,62 +4,86 @@
  Written for the University of Maryland Balloon Payload Project
 
  Originally forked from BMP085 library by Mike Grusin at Sparkfun Electronics, then further forked from the SFE_BMP180 library by LowPowerLabs
+
+ green wire -> SDA
+ blue wire -> SCL
+ white wire -> 3.3v
+ black wire -> GND
  */
 
 #include <BMP180.h>
 #include <Wire.h>
-#include <stdio.h>
-#include <math.h>
 
-// ########################### public methods ###########################
-
-BMP180::BMP180()
+char BMP180::begin()
 // initialize device registers and prepare pressure and temperature readings
 {
-    Serial.println("Initializing BMP180...");
-
-    if (!begin())
+    if (!initialize())
     {
-        Serial.println("BMP180 failed to initialize (is it disconnected?)");
+        print("BMP180 failed to initialize (is it disconnected?)");
+        return 0;
     }
     else
     {
-        Serial.println("BMP180 initialized successfully.");
-        Serial.println("Now attempting baseline pressure reading...");
+        print("BMP180 initialized successfully.");
+        print("Now attempting baseline reading...");
 
         // Get baseline pressure
         baselinePressure = getPressure();
 
         // Print baseline pressure and temperature
-        Serial.print("Baseline pressure is ");
-        Serial.print(baselinePressure);
-        Serial.println(" mb.");
-        Serial.print("Temperature is ");
-        Serial.print(temperature);
-        Serial.println(" C.");
+        print(
+                getMissionTimeString() + " Baseline pressure is "
+                        + String(baselinePressure) + "mb. Temperature is "
+                        + String(temperature) + "C.");
+        return 1;
     }
 }
 
 double BMP180::getTemperature()
 // returns current temperature as read by device
 {
-    getTemperature (temperature);
-    return temperature;
-}
-
-double BMP180::getPressure()
-// Returns current pressure reading in millibars using current temperature
-{
-    char status;
-
-    // You must first get a temperature measurement to perform a pressure reading.
-
     status = startTemperature();
 
     if (status != 0)
     {
         // Wait for the measurement to complete:
-        delay(status);
+        delay (status);
+
+        /*
+         * Retrieve the completed temperature measurement:
+         * Note that the measurement is stored in the variable 'temperature'.
+         * Use '&temperature' to provide the address of temperature to the function.
+         * Function returns 1 if successful, 0 if failure.
+         */
+        status = getTemperature(temperature);
+
+        if (status != 0)
+        {
+            return temperature;
+        }
+        else
+        {
+            print("Error retrieving temperature.");
+            return 0;
+        }
+    }
+    else
+    {
+        print("Error starting temperature.");
+        return 0;
+    }
+}
+
+double BMP180::getPressure()
+// Returns current pressure reading in millibars using current temperature
+{
+// You must first get a temperature measurement to perform a pressure reading.
+    status = startTemperature();
+
+    if (status != 0)
+    {
+        // Wait for the measurement to complete:
+        delay (status);
 
         /*
          * Retrieve the completed temperature measurement:
@@ -100,27 +124,26 @@ double BMP180::getPressure()
                 }
                 else
                 {
-                    Serial.println("Error retrieving pressure measurement.");
-                    return 0.0;
+                    print("Error retrieving pressure.");
+                    return 0;
                 }
             }
             else
             {
-                Serial.println("Error starting pressure measurement.");
-                return 0.0;
+                print("Error starting pressure.");
+                return 0;
             }
         }
         else
         {
-            Serial.println(
-                    "Error retrieving required temperature measurement.");
-            return 0.0;
+            print("Error retrieving temperature.");
+            return 0;
         }
     }
     else
     {
-        Serial.println("Error starting required temperature measurement.");
-        return 0.0;
+        print("Error starting temperature.");
+        return 0;
     }
 }
 
@@ -131,23 +154,52 @@ double BMP180::getAltitude()
     return getAltitude(pressure, baselinePressure);
 }
 
-// ########################### private methods ###########################
+// Returns current millisecond time string as "T+HH:MM:SS"
+String BMP180::getMissionTimeString()
+{
+    byte seconds = millis() % 60, minutes = millis() / 60;
+    byte hours = minutes / 60;
 
-char BMP180::begin()
+    String out = "T+";
+    if (hours < 10)
+    {
+        out += "0";
+    }
+    out += String(hours) + ":";
+    if (minutes < 10)
+    {
+        out += "0";
+    }
+    out += String(minutes) + ":";
+    if (seconds < 10)
+    {
+        out += "0";
+    }
+    out += String(seconds);
+    return out;
+}
+
+// Private function, prints to serial
+void BMP180::print(String message)
+{
+    Serial.println("[" + getMissionTimeString() + "] " + message);
+}
+
+char BMP180::initialize()
 // call pressure.begin() to initialize BMP180 before use
 // returns 1 if success, 0 if failure (bad component or I2C bus shorted?)
 {
     double c3, c4, b1;
 
-    // Start up the Arduino's "wire" (I2C) library:
+// Start up the Arduino's "wire" (I2C) library:
 
     Wire.begin();
 
-    // The BMP180 includes factory calibration data stored on the device.
-    // Each device has different numbers, these must be retrieved and
-    // used in the calculations when taking pressure measurements.
+// The BMP180 includes factory calibration data stored on the device.
+// Each device has different numbers, these must be retrieved and
+// used in the calculations when taking pressure measurements.
 
-    // Retrieve calibration data from device:
+// Retrieve calibration data from device:
 
     if (readInt(0xAA, AC1) && readInt(0xAC, AC2) && readInt(0xAE, AC3)
             && readUInt(0xB0, AC4) && readUInt(0xB2, AC5) && readUInt(0xB4, AC6)
@@ -242,9 +294,9 @@ char BMP180::startTemperature(void)
     data[1] = BMP180_COMMAND_TEMPERATURE;
     result = writeBytes(data, 2);
     if (result)    // good write?
-        return (5);    // return the delay in ms (rounded up) to wait before retrieving data
+        return (5); // return the delay in ms (rounded up) to wait before retrieving data
     else
-        return (0);    // or return 0 if there was a problem communicating with the BMP
+        return (0); // or return 0 if there was a problem communicating with the BMP
 }
 
 char BMP180::startPressure(char oversampling)
@@ -281,9 +333,9 @@ char BMP180::startPressure(char oversampling)
     }
     result = writeBytes(data, 2);
     if (result)    // good write?
-        return (delay);    // return the delay in ms (rounded up) to wait before retrieving data
+        return (delay); // return the delay in ms (rounded up) to wait before retrieving data
     else
-        return (0);    // or return 0 if there was a problem communicating with the BMP
+        return (0); // or return 0 if there was a problem communicating with the BMP
 }
 
 char BMP180::getTemperature(double &T)

@@ -14,12 +14,14 @@
 class BMP180
 {
     public:
-        BMP180();
+        char begin();
         double getTemperature();
         double getPressure();
         double getAltitude();
+        String getMissionTimeString();
+        void print(String message);
     private:
-        char begin();
+        char initialize();
         char startTemperature(void);
         char startPressure(char oversampling);
         char getTemperature(double &T);
@@ -33,7 +35,7 @@ class BMP180
         char writeBytes(unsigned char *values, char length);
 
         double temperature, altitude, pressure, baselinePressure;
-        bool initialized;
+        char status;
         int AC1, AC2, AC3, VB1, VB2, MB, MC, MD;
         unsigned int AC4, AC5, AC6;
         double c5, c6, mc, md, x0, x1, x2, y0, y1, y2, p0, p1, p2;
