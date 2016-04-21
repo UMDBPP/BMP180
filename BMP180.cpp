@@ -12,26 +12,27 @@
  */
 
 #include <BMP180.h>
-#include <Wire.h>
 
 char BMP180::begin()
 // initialize device registers and prepare pressure and temperature readings
 {
+    log("Initializing BMP180 temperature and pressure sensor.");
+
     if (!initialize())
     {
-        print("BMP180 failed to initialize (is it disconnected?)");
+        log("BMP180 failed to initialize (is it disconnected?)");
         return 0;
     }
     else
     {
-        print("BMP180 initialized successfully.");
-        print("Now attempting baseline reading...");
+        log("BMP180 initialized successfully.");
+        log("Now attempting baseline reading...");
 
         // Get baseline pressure
         baselinePressure = getPressure();
 
         // Print baseline pressure and temperature
-        print(
+        log(
                 getMissionTimeString() + " Baseline pressure is "
                         + String(baselinePressure) + "mb. Temperature is "
                         + String(temperature) + "C.");
@@ -63,13 +64,13 @@ double BMP180::getTemperature()
         }
         else
         {
-            print("Error retrieving temperature.");
+            log("Error retrieving temperature.");
             return 0;
         }
     }
     else
     {
-        print("Error starting temperature.");
+        log("Error starting temperature.");
         return 0;
     }
 }
@@ -124,25 +125,25 @@ double BMP180::getPressure()
                 }
                 else
                 {
-                    print("Error retrieving pressure.");
+                    log("Error retrieving pressure.");
                     return 0;
                 }
             }
             else
             {
-                print("Error starting pressure.");
+                log("Error starting pressure.");
                 return 0;
             }
         }
         else
         {
-            print("Error retrieving temperature.");
+            log("Error retrieving temperature.");
             return 0;
         }
     }
     else
     {
-        print("Error starting temperature.");
+        log("Error starting temperature.");
         return 0;
     }
 }
@@ -180,7 +181,7 @@ String BMP180::getMissionTimeString()
 }
 
 // Private function, prints to serial
-void BMP180::print(String message)
+void BMP180::log(String message)
 {
     Serial.println("[" + getMissionTimeString() + "] " + message);
 }
@@ -200,6 +201,8 @@ char BMP180::initialize()
 // used in the calculations when taking pressure measurements.
 
 // Retrieve calibration data from device:
+
+    log("Attempting to read calibration data...");
 
     if (readInt(0xAA, AC1) && readInt(0xAC, AC2) && readInt(0xAE, AC3)
             && readUInt(0xB0, AC4) && readUInt(0xB2, AC5) && readUInt(0xB4, AC6)
@@ -234,6 +237,8 @@ char BMP180::initialize()
          Serial.print("MC: "); Serial.println(MC);
          Serial.print("MD: "); Serial.println(MD);
          */
+
+        Serial.println("Reading calibration data successful.");
 
         // Compute floating-point polynominals:
         c3 = 160.0 * pow(2, -15) * AC3;
@@ -294,9 +299,9 @@ char BMP180::startTemperature(void)
     data[1] = BMP180_COMMAND_TEMPERATURE;
     result = writeBytes(data, 2);
     if (result)    // good write?
-        return (5); // return the delay in ms (rounded up) to wait before retrieving data
+        return (5);    // return the delay in ms (rounded up) to wait before retrieving data
     else
-        return (0); // or return 0 if there was a problem communicating with the BMP
+        return (0);    // or return 0 if there was a problem communicating with the BMP
 }
 
 char BMP180::startPressure(char oversampling)
@@ -333,9 +338,9 @@ char BMP180::startPressure(char oversampling)
     }
     result = writeBytes(data, 2);
     if (result)    // good write?
-        return (delay); // return the delay in ms (rounded up) to wait before retrieving data
+        return (delay);    // return the delay in ms (rounded up) to wait before retrieving data
     else
-        return (0); // or return 0 if there was a problem communicating with the BMP
+        return (0);    // or return 0 if there was a problem communicating with the BMP
 }
 
 char BMP180::getTemperature(double &T)
@@ -462,7 +467,7 @@ char BMP180::readInt(char address, int &value)
     data[0] = address;
     if (readBytes(data, 2))
     {
-        value = (((int) data[0] << 8) | (int) data[1]);
+        value = ( ((int) data[0] << 8) | (int) data[1]);
         //if (*value & 0x8000) *value |= 0xFFFF0000; // sign extend if negative
         return (1);
     }
@@ -481,7 +486,7 @@ char BMP180::readUInt(char address, unsigned int &value)
     data[0] = address;
     if (readBytes(data, 2))
     {
-        value = (((unsigned int) data[0] << 8) | (unsigned int) data[1]);
+        value = ( ((unsigned int) data[0] << 8) | (unsigned int) data[1]);
         return (1);
     }
     value = 0;

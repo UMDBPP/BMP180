@@ -10,6 +10,7 @@
 #define BMP180_h
 
 #include <Arduino.h>
+#include <Wire.h>
 
 class BMP180
 {
@@ -19,7 +20,7 @@ class BMP180
         double getPressure();
         double getAltitude();
         String getMissionTimeString();
-        void print(String message);
+        void log(String message);
     private:
         char initialize();
         char startTemperature(void);
