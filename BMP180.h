@@ -12,6 +12,17 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#define BMP180_ADDR 0x77 // 7-bit address
+
+#define BMP180_REG_CONTROL 0xF4
+#define BMP180_REG_RESULT 0xF6
+
+#define BMP180_COMMAND_TEMPERATURE 0x2E
+#define BMP180_COMMAND_PRESSURE0 0x34
+#define BMP180_COMMAND_PRESSURE1 0x74
+#define BMP180_COMMAND_PRESSURE2 0xB4
+#define BMP180_COMMAND_PRESSURE3 0xF4
+
 class BMP180
 {
     public:
@@ -42,16 +53,5 @@ class BMP180
         double c5, c6, mc, md, x0, x1, x2, y0, y1, y2, p0, p1, p2;
         char _error;
 };
-
-#define BMP180_ADDR 0x77 // 7-bit address
-
-#define	BMP180_REG_CONTROL 0xF4
-#define	BMP180_REG_RESULT 0xF6
-
-#define	BMP180_COMMAND_TEMPERATURE 0x2E
-#define	BMP180_COMMAND_PRESSURE0 0x34
-#define	BMP180_COMMAND_PRESSURE1 0x74
-#define	BMP180_COMMAND_PRESSURE2 0xB4
-#define	BMP180_COMMAND_PRESSURE3 0xF4
 
 #endif
